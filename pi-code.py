@@ -15,27 +15,33 @@ pnconf.uuid = 'raspberrypi_device'
 pubnub = PubNub(pnconf)
 channel = 'chenweisong728'
 
-# GPIO Setup
+# GPIO Setup - 保留必要的传感器设置
 GPIO.setmode(GPIO.BOARD)
-pir = 26                # Motion sensor
-temp_sensor = 16        # Temperature sensor (模拟)
-led = 18                # LED indicator
-fan = 22                # Ventilation fan
+pir = 26  # Motion sensor
+# 模拟温度传感器，不需要GPIO设置
 
+# 设置PIR传感器为输入
 GPIO.setup(pir, GPIO.IN)
-GPIO.setup(temp_sensor, GPIO.IN)
-GPIO.setup(led, GPIO.OUT)
-GPIO.setup(fan, GPIO.OUT)
 
-# Initialize outputs
-GPIO.output(led, GPIO.LOW)
-GPIO.output(fan, GPIO.LOW)
-
-# Global variables
+# 全局变量
 last_motion_time = time.time()
 alarm_active = False
 heating_active = False
 fan_active = False
+led_active = False  # 新增LED状态变量
+
+# 模拟LED开启函数
+def set_led(state):
+    global led_active
+    led_active = state
+    if state:
+        print("************************")
+        print("* LED ALERT ACTIVATED! *")
+        print("************************")
+    else:
+        print("************************")
+        print("* LED ALERT TURNED OFF *")
+        print("************************")
 
 # Define callback for PubNub messages
 class MySubscribeCallback(SubscribeCallback):
@@ -50,7 +56,7 @@ class MySubscribeCallback(SubscribeCallback):
             if 'reset_alarm' in data and data['reset_alarm'] == True:
                 print("Alarm reset received from app")
                 alarm_active = False
-                GPIO.output(led, GPIO.LOW)
+                set_led(False)  # 使用模拟函数关闭LED
                 
                 # Send confirmation to app
                 pubnub.publish().channel(channel).message({
@@ -61,13 +67,17 @@ class MySubscribeCallback(SubscribeCallback):
             # Check if this is a fan control message
             if 'fan_control' in data:
                 if data['fan_control'] == 'on' and not fan_active:
-                    GPIO.output(fan, GPIO.HIGH)
+                    # 模拟风扇开启，只打印消息
+                    print("--------------------------------------")
+                    print("FAN TURNED ON - Ventilation activated!")
+                    print("--------------------------------------")
                     fan_active = True
-                    print("Fan turned ON")
                 elif data['fan_control'] == 'off' and fan_active:
-                    GPIO.output(fan, GPIO.LOW)
+                    # 模拟风扇关闭，只打印消息
+                    print("--------------------------------------")
+                    print("FAN TURNED OFF - Ventilation stopped!")
+                    print("--------------------------------------")
                     fan_active = False
-                    print("Fan turned OFF")
                 
                 # Send confirmation to app
                 pubnub.publish().channel(channel).message({
@@ -93,7 +103,7 @@ def send_no_motion_message():
             
             # Activate alarm
             alarm_active = True
-            GPIO.output(led, GPIO.HIGH)  # Turn on LED alert
+            set_led(True)  # 使用模拟函数开启LED
             
             # Send alert to app
             pubnub.publish().channel(channel).message({
@@ -110,19 +120,19 @@ def send_no_motion_message():
                 'heating_active': heating_active,
                 'alarm_active': alarm_active,
                 'fan_active': fan_active,
+                'led_active': led_active,  # 添加LED状态
                 'last_motion': int(time.time() - last_motion_time),
                 'timestamp': time.time()
             }).sync()
 
 def read_temperature():
-    # Function to read temperature sensor (simulated)
+    # Function to read temperature sensor (completely simulated)
     global heating_active
     
     while True:
-        time.sleep(3)
+        time.sleep(15)  # 每15秒切换一次加热状态
         
-        # Simulate temperature reading (in real application, read from actual sensor)
-        # For demo, we'll toggle heating status every 15 seconds
+        # 完全模拟温度读取，简单地切换加热状态
         heating_active = not heating_active
         status = "active" if heating_active else "inactive"
         print(f"Heating status: {status}")
@@ -148,8 +158,10 @@ def auto_safety_measure():
         
         # If alarm has been active for 30+ seconds and fan is not active
         if alarm_active and alarm_start_time > 0 and time.time() - alarm_start_time >= 30 and not fan_active:
-            print("Auto-activating fan as safety measure")
-            GPIO.output(fan, GPIO.HIGH)
+            # 模拟自动开启风扇，只打印消息
+            print("===================================================")
+            print("AUTO-SAFETY ACTIVATED: Fan turned ON automatically!")
+            print("===================================================")
             fan_active = True
             
             # Notify app of automatic fan activation
@@ -179,7 +191,7 @@ print("Kitchen monitoring system active")
 # Main loop - detect motion
 try:
     while True:
-        if GPIO.input(pir):  # Motion detected
+        if GPIO.input(pir):  # Motion detected - 保留PIR传感器的实际检测
             print("Motion Detected!")
             last_motion_time = time.time()  # Reset the timer
             
