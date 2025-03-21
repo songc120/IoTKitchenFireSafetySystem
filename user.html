@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kitchen Safety Alert</title>
+    <script src="https://cdn.pubnub.com/sdk/javascript/pubnub.4.29.9.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 50px;
+        }
+        #alertBox {
+            display: none;
+            background: red;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px auto;
+            width: 80%;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 18px;
+            border: none;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        #dismissBtn {
+            background: green;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Kitchen Safety System</h1>
+    <div id="alertBox">
+        <h2>🔥 Fire Hazard Alert!</h2>
+        <p>Warning: A heated appliance is left unattended.</p>
+        <button id="dismissBtn">Dismiss Alert</button>
+    </div>
+
+    <script>
+        const pubnub = new PubNub({
+            subscribeKey: "sub-c-7c1de1d9-ea5b-451f-bb88-35ae502a81c4", 
+            publishKey: "pub-c-85ba3694-4855-4861-a14b-fdfcb90cf839", 
+            uuid: "userId" 
+        });
+
+        pubnub.subscribe({
+            channels: ["chenweisong728"]
+        });
+
+        pubnub.addListener({
+            message: function(event) {
+                console.log("Received Message:", event.message);
+                if (event.message.alert === "fire_hazard") {
+                    document.getElementById("alertBox").style.display = "block";
+                }
+            }
+        });
+
+        // dismiss alert
+        document.getElementById("dismissBtn").addEventListener("click", function() {
+            pubnub.publish({
+                channel: "chenweisong728",
+                message: { reset_alarm: "True" }
+            }, function(status, response) {
+                console.log("Alert Dismissed:", response);
+                document.getElementById("alertBox").style.display = "none";
+            });
+        });
+    </script>
+
+</body>
+</html>
