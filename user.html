@@ -20,6 +20,19 @@
             margin: 20px auto;
             width: 80%;
         }
+        #statusBox {
+            background: lightgray;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px auto;
+            width: 80%;
+        }
+        #countdownWrapper {
+            display: none; /* 默认隐藏 */
+            font-size: 20px;
+            font-weight: bold;
+            color: red;
+        }
         button {
             padding: 10px 20px;
             font-size: 18px;
@@ -36,6 +49,17 @@
 <body>
 
     <h1>Kitchen Safety System</h1>
+
+    <div id="statusBox">
+        <h2>Device Status</h2>
+        <p><strong>Alarm Active:</strong> <span id="alarmStatus">N/A</span></p>
+        <p><strong>Heating Active:</strong> <span id="heatingStatus">N/A</span></p>
+        <p><strong>Motion Detected:</strong> <span id="motionStatus">N/A</span></p>
+        <p><strong>Last Motion Time:</strong> <span id="lastMotionTime">N/A</span></p>
+        <p><strong>No Motion Time:</strong> <span id="noMotionTime">N/A</span></p>
+        <p id="countdownWrapper"><strong>High Temperature🔥 and No Motion!! Alarm after:</strong> <span id="countdown">N/A</span></p>
+    </div>
+
     <div id="alertBox">
         <h2>🔥 Fire Hazard Alert!</h2>
         <p>Warning: A heated appliance is left unattended.</p>
@@ -56,13 +80,40 @@
         pubnub.addListener({
             message: function(event) {
                 console.log("Received Message:", event.message);
-                    if (event.message.alarm_active == true) {
+                const msg = event.message;
+
+                // 更新设备状态
+                document.getElementById("alarmStatus").textContent = msg.alarm_active ? "Yes" : "No";
+                document.getElementById("heatingStatus").textContent = msg.heating_active ? "Yes" : "No";
+                document.getElementById("motionStatus").textContent = msg.motion_detected ? "Yes" : "No";
+                document.getElementById("lastMotionTime").textContent = msg.last_motion_time || "N/A";
+                document.getElementById("noMotionTime").textContent = msg.no_motion_time || "N/A";
+
+                // 报警逻辑
+                if (msg.alarm_active) {
                     document.getElementById("alertBox").style.display = "block";
+                } else {
+                    document.getElementById("alertBox").style.display = "none";
+                }
+
+                // 计算倒计时
+                if (msg.heating_active && !msg.alarm_active) {
+                    const currentTime = Math.floor(Date.now() / 1000); // 获取当前 Unix 时间（秒）
+                    const countdownTime = (msg.no_motion_time + msg.last_motion_time) - currentTime;
+                    
+                    if (countdownTime > 0) {
+                        document.getElementById("countdownWrapper").style.display = "block"; // 显示倒计时
+                        document.getElementById("countdown").textContent = countdownTime + "s";
+                    } else {
+                        document.getElementById("countdown").textContent = "Expired";
+                    }
+                } else {
+                    document.getElementById("countdownWrapper").style.display = "none"; // 隐藏倒计时
                 }
             }
         });
 
-        // dismiss alert
+        // Dismiss alert
         document.getElementById("dismissBtn").addEventListener("click", function() {
             pubnub.publish({
                 channel: "chenweisong728",
