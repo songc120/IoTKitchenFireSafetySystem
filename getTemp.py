@@ -1,11 +1,27 @@
-#https://www.electronicshub.org/raspberry-pi-dht11-humidity-temperature-sensor-interface/
-import sys
-import Adafruit_DHT
+import adafruit_dht
+import board
 import time
+# sudo apt-get update
+# sudo apt-get install python3-pip python3-dev libgpiod2
+# pip3 install adafruit-blinka
+# pip3 install adafruit-circuitpython-dht
 
-while True:
+# Initialize the DHT11 sensor connected to GPIO pin 4
+dht_device = adafruit_dht.DHT11(board.D4)
 
-    humidity, temperature = Adafruit_DHT.read_retry(11, 4)
+try:
+    start_time = time.time()
+    temperature = dht_device.temperature
+    humidity = dht_device.humidity
+    end_time = time.time()
 
-    print('Temp: {0:0.1f} C  Humidity: {1:0.1f} %'.format(temperature, humidity))
-    time.sleep(1)
+    if humidity is not None and temperature is not None:
+        print(f"Measured Temp={temperature}°C | Hum={humidity}%")
+        print(f"Measurement took {end_time - start_time:.2f}s")
+    else:
+        print("Failed to retrieve data from humidity sensor")
+except Exception as e:
+    print(f"An error occurred: {e}")
+finally:
+    dht_device.exit()
+
