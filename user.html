@@ -56,7 +56,7 @@
         pubnub.addListener({
             message: function(event) {
                 console.log("Received Message:", event.message);
-                if (event.message.alert === "fire_hazard") {
+                    if (event.message.alarm_active == true) {
                     document.getElementById("alertBox").style.display = "block";
                 }
             }
