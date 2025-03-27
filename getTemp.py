@@ -2,7 +2,10 @@
 import sys
 import Adafruit_DHT
 import time
-
+# sudo apt-get update
+# sudo apt-get install python3-pip python3-dev libgpiod2
+# pip3 install adafruit-blinka
+# pip3 install adafruit-circuitpython-dht
 while True:
 
     humidity, temperature = Adafruit_DHT.read_retry(11, 4)
