@@ -19,7 +19,7 @@
                     <p><strong>Last Motion Time:</strong> <span id="lastMotionTime">N/A</span></p>
                     <p><strong>No Motion Time:</strong> <span id="noMotionTime">N/A</span></p>
                     <p id="countdownWrapper" style="display: none;">
-                        <strong>High Temperature🔥 and No Motion!! Alarm after:</strong> 
+                        <strong>High Temperature and No Motion!! Alarm repeat in :</strong> 
                         <span id="countdown" class="text-danger">N/A</span>
                     </p>
                 </div>
@@ -81,7 +81,7 @@
             // Countdown calculation
             if (msg.heating_active && !msg.alarm_active) {
                 const currentTime = Math.floor(Date.now() / 1000);
-                const countdownTime = (msg.no_motion_time + msg.last_motion_time) - currentTime;
+                const countdownTime = Math.round((msg.no_motion_time + msg.last_motion_time) - currentTime);
                 
                 if (countdownTime > 0) {
                     document.getElementById("countdownWrapper").style.display = "block";
