@@ -2,6 +2,7 @@ from flask import Blueprint, render_template
 from flask_login import login_required
 from pubnub.pnconfiguration import PNConfiguration
 from pubnub.pubnub import PubNub
+from .decorators import admin_required
 
 main = Blueprint('main', __name__)
 
@@ -18,6 +19,7 @@ def dashboard():
 
 @main.route('/api/reset_alarm', methods=['POST'])
 @login_required
+@admin_required
 def reset_alarm():
     pubnub.publish().channel("chenweisong728").message({
         "reset_alarm": "True"

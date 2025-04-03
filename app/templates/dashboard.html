@@ -30,8 +30,21 @@
     <div id="alertBox" class="alert alert-danger" style="display: none;">
         <h2>🔥 Fire Hazard Alert!</h2>
         <p>Warning: A heated appliance is left unattended.</p>
-        <button id="dismissBtn" class="btn btn-success">Dismiss Alert</button>
+        {% if current_user.is_admin() %}
+            <button id="dismissBtn" class="btn btn-success">Dismiss Alert</button>
+        {% else %}
+            <p class="text-muted">Please contact an administrator to dismiss this alert.</p>
+        {% endif %}
     </div>
+
+    {% if current_user.is_admin() %}
+        <div class="card mt-4">
+            <div class="card-body">
+                <h3 class="card-title">Admin Actions</h3>
+                <a href="{{ url_for('auth.register_admin') }}" class="btn btn-primary">Register New Admin</a>
+            </div>
+        </div>
+    {% endif %}
 </div>
 
 <script src="https://cdn.pubnub.com/sdk/javascript/pubnub.4.29.9.min.js"></script>
@@ -82,7 +95,8 @@
         }
     });
 
-    // Dismiss alert
+    // Dismiss alert (only for admin users)
+    {% if current_user.is_admin() %}
     document.getElementById("dismissBtn").addEventListener("click", function() {
         fetch('/api/reset_alarm', {
             method: 'POST',
@@ -96,5 +110,6 @@
             document.getElementById("alertBox").style.display = "none";
         });
     });
+    {% endif %}
 </script>
 {% endblock %} 
