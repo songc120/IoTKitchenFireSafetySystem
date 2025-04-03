@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="text-center mb-4">Kitchen Safety System</h1>
+    
+    <div id="statusBox" class="card mb-4">
+        <div class="card-body">
+            <h2 class="card-title">Device Status</h2>
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Alarm Active:</strong> <span id="alarmStatus">N/A</span></p>
+                    <p><strong>Heating Active:</strong> <span id="heatingStatus">N/A</span></p>
+                    <p><strong>Motion Detected:</strong> <span id="motionStatus">N/A</span></p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Last Motion Time:</strong> <span id="lastMotionTime">N/A</span></p>
+                    <p><strong>No Motion Time:</strong> <span id="noMotionTime">N/A</span></p>
+                    <p id="countdownWrapper" style="display: none;">
+                        <strong>High Temperature🔥 and No Motion!! Alarm after:</strong> 
+                        <span id="countdown" class="text-danger">N/A</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="alertBox" class="alert alert-danger" style="display: none;">
+        <h2>🔥 Fire Hazard Alert!</h2>
+        <p>Warning: A heated appliance is left unattended.</p>
+        <button id="dismissBtn" class="btn btn-success">Dismiss Alert</button>
+    </div>
+</div>
+
+<script src="https://cdn.pubnub.com/sdk/javascript/pubnub.4.29.9.min.js"></script>
+<script>
+    const pubnub = new PubNub({
+        subscribeKey: "sub-c-7c1de1d9-ea5b-451f-bb88-35ae502a81c4",
+        publishKey: "pub-c-85ba3694-4855-4861-a14b-fdfcb90cf839",
+        uuid: "userId"
+    });
+
+    pubnub.subscribe({
+        channels: ["chenweisong728"]
+    });
+
+    pubnub.addListener({
+        message: function(event) {
+            console.log("Received Message:", event.message);
+            const msg = event.message;
+
+            // Update device status
+            document.getElementById("alarmStatus").textContent = msg.alarm_active ? "Yes" : "No";
+            document.getElementById("heatingStatus").textContent = msg.heating_active ? "Yes" : "No";
+            document.getElementById("motionStatus").textContent = msg.motion_detected ? "Yes" : "No";
+            document.getElementById("lastMotionTime").textContent = msg.last_motion_time || "N/A";
+            document.getElementById("noMotionTime").textContent = msg.no_motion_time || "N/A";
+
+            // Alarm logic
+            if (msg.alarm_active) {
+                document.getElementById("alertBox").style.display = "block";
+            } else {
+                document.getElementById("alertBox").style.display = "none";
+            }
+
+            // Countdown calculation
+            if (msg.heating_active && !msg.alarm_active) {
+                const currentTime = Math.floor(Date.now() / 1000);
+                const countdownTime = (msg.no_motion_time + msg.last_motion_time) - currentTime;
+                
+                if (countdownTime > 0) {
+                    document.getElementById("countdownWrapper").style.display = "block";
+                    document.getElementById("countdown").textContent = countdownTime + "s";
+                } else {
+                    document.getElementById("countdown").textContent = "Expired";
+                }
+            } else {
+                document.getElementById("countdownWrapper").style.display = "none";
+            }
+        }
+    });
+
+    // Dismiss alert
+    document.getElementById("dismissBtn").addEventListener("click", function() {
+        fetch('/api/reset_alarm', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log("Alert Dismissed:", data);
+            document.getElementById("alertBox").style.display = "none";
+        });
+    });
+</script>
+{% endblock %} 
