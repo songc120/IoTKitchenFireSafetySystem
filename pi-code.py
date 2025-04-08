@@ -17,13 +17,12 @@ pnconf.uuid = 'userId'
 pubnub = PubNub(pnconf)
 channel = 'chenweisong728'
 
-# GPIO Setup - 保留必要的传感器设置
+# GPIO Setup
 GPIO.setmode(GPIO.BCM)
 pir = 26  # Motion sensor
-# 设置PIR传感器为输入
 GPIO.setup(pir, GPIO.IN)
 
-# 设置fan传感器
+# Fan sensor
 #GPIO.setmode(GPIO.BCM)  # Use BCM numbering scheme
 GPIO.setwarnings(False)  # Disable GPIO warnings
 fan_pin = 17
@@ -31,11 +30,11 @@ fan_pin = 17
 GPIO.setup(fan_pin, GPIO.OUT)
 GPIO.output(fan_pin, GPIO.LOW)
 
-# 温度传感器
+# Temperature sensor
 # Initialize the DHT11 sensor connected to GPIO pin 4
 dht_device = adafruit_dht.DHT11(board.D4)
 
-# 全局变量
+# global variables
 last_motion_time = time.time()
 last_report_time = time.time()
 alarm_active = False
@@ -136,10 +135,10 @@ def read_temperature():
 
                     print("Warning! Temp or humidity exceed threshold!！")
             else:
-                print("无法从传感器获取数据")
+                print("Could not read temperature data")
         except Exception as e:
             print(f"Error reading data from the temp/humidity sensor: {e}")
-        time.sleep(detect_frequency )  # 每detect_frequency秒读取一次数据
+        time.sleep(detect_frequency )  # read every detect_frequency seconds
 
 # Start background threads
 send_alert_thread = threading.Thread(target=send_alert_message, daemon=True)
@@ -157,7 +156,7 @@ print("Kitchen monitoring system active")
 # Main loop - detect motion
 try:
     while True:
-        if GPIO.input(pir):  # Motion detected - 保留PIR传感器的实际检测
+        if GPIO.input(pir):  # Motion detected
             print("Motion Detected!")
             last_motion_time = time.time()  # Reset the timer
             time.sleep(detect_frequency)  # Delay to avoid multiple detections
